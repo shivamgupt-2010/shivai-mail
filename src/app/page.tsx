@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Shield, Smartphone, Globe, LayoutGrid, CheckCircle, Menu, X, Brain } from 'lucide-react';
 import { identity } from '@/lib/identity';
-import { ShivAIUser } from '@shivai/identity-sdk';
+import { ShivAIUser } from '@/lib/sdk';
 import MailSidebar from '@/components/layout/MailSidebar';
 import InboxFeed from '@/components/mail/InboxFeed';
 import EmailThreadView from '@/components/mail/EmailThreadView';
