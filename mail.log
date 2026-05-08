@@ -1,0 +1,13 @@
+
+> mail-service@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://169.254.0.21:3001
+- Environments: .env.local
+✓ Ready in 3.0s
+⚠ `images.domains` is deprecated in favor of `images.remotePatterns`. Please update next.config.js to protect your application from malicious users.
+⚠ Slow filesystem detected. The benchmark took 346ms. If /home/engine/shivai-ecosystem/apps/mail-service/.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+
