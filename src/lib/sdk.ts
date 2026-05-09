@@ -1,5 +1,10 @@
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 
+/**
+ * PRODUCTION-GRADE SHIVAI IDENTITY SDK
+ * Version: 2.0.5-FINAL
+ */
+
 export interface ShivAIProfile {
   id: string;
   username: string;
@@ -32,6 +37,7 @@ export class ShivAISDK {
     return ShivAISDK.instance;
   }
 
+  // CORE AUTH
   async login(email: string, password: string) {
     return await this.supabase.auth.signInWithPassword({
       email,
@@ -54,7 +60,9 @@ export class ShivAISDK {
       .select('*')
       .eq('id', userId)
       .single();
-    return data;
+    
+    if (error) return null;
+    return data as ShivAIProfile;
   }
 
   onAuthStateChange(callback: (session: Session | null) => void) {

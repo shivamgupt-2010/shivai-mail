@@ -1,8 +1,13 @@
 'use client';
 
+/**
+ * SHIVAI MAIL HUB v2.0.6-PROD
+ * BUILD_FIX_V3: Synchronized with PGS-1 SDK
+ */
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Shield, Smartphone, Globe, LayoutGrid, CheckCircle, Menu, X, Brain, Lock } from 'lucide-react';
+import { Mail, CheckCircle, Menu, Brain, Lock } from 'lucide-react';
 import { identity } from '@/lib/identity';
 import { ShivAIProfile } from '@/lib/sdk';
 
@@ -28,12 +33,17 @@ export default function Home() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const user = await identity.getCurrentUser();
-      if (user) {
-        const p = await identity.getProfile(user.id);
-        setProfile(p);
+      try {
+        const user = await identity.getCurrentUser();
+        if (user) {
+          const p = await identity.getProfile(user.id);
+          setProfile(p);
+        }
+      } catch (err) {
+        console.error("Auth check failed", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     checkAuth();
   }, []);
@@ -43,6 +53,7 @@ export default function Home() {
     setAuthLoading(true);
     setAuthError('');
     try {
+        // Explicitly calling login with 2 arguments
         const { data, error } = await identity.login(loginEmail, loginPassword);
         if (error) throw error;
         window.location.reload();
@@ -133,11 +144,7 @@ export default function Home() {
 
   return (
     <main className="h-screen bg-[#050505] flex overflow-hidden selection:bg-blue-500/30 selection:text-white">
-       
-       {/* Triple-Pane Orchestration */}
        <div className="flex w-full h-full">
-          
-          {/* Panel 1: Navigation (Persistent) */}
           <div className="h-full shrink-0">
              <MailSidebar 
                activeFolder={activeFolder} 
@@ -146,7 +153,6 @@ export default function Home() {
              />
           </div>
 
-          {/* Panel 2: Intelligent Feed (Main Content) */}
           <div className="flex-1 min-w-[400px] border-r border-white/5 h-full overflow-hidden bg-[#050505]">
              <InboxFeed 
                onMailSelect={setSelectedMailId} 
@@ -154,12 +160,10 @@ export default function Home() {
              />
           </div>
 
-          {/* Panel 3: Contextual Intelligence (Right Side) */}
           <div className="hidden xl:block w-[450px] h-full shrink-0 bg-[#080808]/50 backdrop-blur-md">
              <IntelligencePanel mailId={selectedMailId} />
           </div>
 
-          {/* Thread Overlay (Mobile/Tablet and Desktop Detail) */}
           <AnimatePresence>
             {selectedMailId && (
               <motion.div 
@@ -176,10 +180,8 @@ export default function Home() {
               </motion.div>
             )}
           </AnimatePresence>
-
        </div>
 
-       {/* Floating AI Orb Assistant */}
        <div className="fixed bottom-10 right-[480px] hidden xl:block z-[200]">
           <motion.button 
             whileHover={{ scale: 1.1, rotate: 10 }}
@@ -192,7 +194,6 @@ export default function Home() {
              <Brain className="text-white" size={24} />
           </motion.button>
        </div>
-
     </main>
   );
 }
