@@ -8,8 +8,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, CheckCircle, Menu, Brain, Lock } from 'lucide-react';
-import { identity } from '@/lib/identity';
-import { ShivAIProfile } from '@/lib/sdk';
+import { identity } from '@/lib/shiv-auth';
+import { ShivAIProfile } from '@/lib/production-sdk';
 
 // Futuristic Components
 import MailSidebar from '@/components/layout/MailSidebar';
@@ -54,7 +54,7 @@ export default function Home() {
     setAuthError('');
     try {
         // Explicitly calling login with 2 arguments
-        const { data, error } = await identity.login(loginEmail, loginPassword);
+        const { data, error } = await (identity as any).login(loginEmail, loginPassword);
         if (error) throw error;
         window.location.reload();
     } catch (err: any) {
