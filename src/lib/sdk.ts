@@ -1,203 +1,63 @@
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 
-export interface ShivAIUser extends User {
-  behaviorScore?: number;
-  permissions?: string[];
-  username?: string;
-  fullName?: string;
-  bio?: string;
-  theme?: string;
-  isVerified?: boolean;
+export interface ShivAIProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url?: string;
   dob?: string;
   country?: string;
-  identityStrength?: number;
-  riskLevel?: string;
-  neuralPatternStatus?: string;
-  isLocked?: boolean;
-  trustScore?: number;
-  verificationLevel?: number;
-  humanConfidence?: number;
+  identity_strength: number;
+  trust_score: number;
+  behavior_score: number;
+  status: 'active' | 'suspended' | 'lockdown';
+  is_verified: boolean;
+  metadata: Record<string, any>;
 }
 
-export interface ActivityLog {
-  id: string;
-  action: string;
-  description: string;
-  created_at: string;
-  metadata?: any;
-}
+export class ShivAISDK {
+  private static instance: ShivAISDK;
+  public supabase: SupabaseClient;
 
-export interface Device {
-  id: string;
-  device_name: string;
-  device_type: string;
-  last_active: string;
-  is_trusted: boolean;
-  browser?: string;
-  os?: string;
-  location_city?: string;
-  location_country?: string;
-}
-
-export interface EcosystemNode {
-  id: string;
-  label: string;
-  status: 'online' | 'offline' | 'warning';
-  type: 'app' | 'core' | 'service';
-  connections: string[];
-}
-
-export class ShivAIIdentity {
-  private supabase: SupabaseClient;
-
-  constructor(supabaseUrl: string, supabaseAnonKey: string) {
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+  private constructor(url: string, key: string) {
+    this.supabase = createClient(url, key);
   }
 
-  // AUTH (Password-based for @shiv.ai handles)
-  async signUp(email: string, password: string, metadata: any = {}) {
-    return await this.supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
+  public static getInstance(url: string, key: string): ShivAISDK {
+    if (!ShivAISDK.instance) {
+      ShivAISDK.instance = new ShivAISDK(url, key);
+    }
+    return ShivAISDK.instance;
   }
 
   async login(email: string, password: string) {
     return await this.supabase.auth.signInWithPassword({
       email,
-      password,
+      password
     });
   }
 
   async logout() {
-    return await this.supabase.auth.signOut();
+    await this.supabase.auth.signOut();
   }
 
-  // PROFILE & INTEL
-  async getCurrentUser(): Promise<ShivAIUser | null> {
+  async getCurrentUser(): Promise<User | null> {
     const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return null;
+    return user;
+  }
 
-    const { data: profile } = await this.supabase
+  async getProfile(userId: string): Promise<ShivAIProfile | null> {
+    const { data, error } = await this.supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
-
-    return {
-      ...user,
-      behaviorScore: profile?.behavior_score,
-      permissions: profile?.permissions,
-      username: profile?.username,
-      fullName: profile?.full_name,
-      bio: profile?.bio,
-      theme: profile?.theme,
-      isVerified: profile?.is_verified,
-      dob: profile?.dob,
-      country: profile?.country,
-      identityStrength: profile?.identity_strength,
-      riskLevel: profile?.risk_level,
-      neuralPatternStatus: profile?.neural_pattern_status,
-      isLocked: profile?.is_locked,
-      trustScore: profile?.trust_score,
-      verificationLevel: profile?.verification_level,
-      humanConfidence: profile?.human_confidence,
-    };
+    return data;
   }
 
-  async updateProfile(updates: any) {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    return await this.supabase
-      .from('profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
-  }
-
-  async triggerIntelligenceRefresh() {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return;
-    await this.supabase.rpc('calculate_identity_strength', { p_user_id: user.id });
-  }
-
-  async lockdown() {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return;
-    await this.supabase.rpc('lockdown_ecosystem', { p_user_id: user.id });
-    await this.logout();
-  }
-
-  // ECOSYSTEM
-  async getTimeline(): Promise<ActivityLog[]> {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return [];
-
-    const { data } = await this.supabase
-      .from('activity_logs')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
-    return data || [];
-  }
-
-  async getDevices(): Promise<Device[]> {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return [];
-
-    const { data } = await this.supabase
-      .from('devices')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('last_active', { ascending: false });
-    return data || [];
-  }
-
-  async getEcosystemGraph(): Promise<EcosystemNode[]> {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return [];
-
-    const { data: apps } = await this.supabase
-      .from('connected_apps')
-      .select('*')
-      .eq('user_id', user.id);
-
-    const nodes: EcosystemNode[] = [
-      { id: 'core', label: 'AI Core', status: 'online', type: 'core', connections: ['identity'] },
-      { id: 'identity', label: 'Identity Hub', status: 'online', type: 'app', connections: ['core'] },
-    ];
-
-    apps?.forEach(app => {
-      nodes.push({
-        id: app.id,
-        label: app.app_name,
-        status: app.status === 'Active' ? 'online' : 'offline',
-        type: 'app',
-        connections: ['identity']
-      });
-      nodes[1].connections.push(app.id);
+  onAuthStateChange(callback: (session: Session | null) => void) {
+    return this.supabase.auth.onAuthStateChange((_event, session) => {
+      callback(session);
     });
-
-    return nodes;
-  }
-
-  async trackAction(action: string, description: string, metadata: any = {}) {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return;
-
-    await this.supabase.from('activity_logs').insert({
-      user_id: user.id,
-      action,
-      description,
-      metadata
-    });
-    
-    // Silent background logic to improve score
-    await this.supabase.rpc('increment_behavior_score', { user_id: user.id, amount: 0.05 });
-    await this.triggerIntelligenceRefresh();
   }
 }

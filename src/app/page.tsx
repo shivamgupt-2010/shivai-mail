@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Shield, Smartphone, Globe, LayoutGrid, CheckCircle, Menu, X, Brain, Lock } from 'lucide-react';
 import { identity } from '@/lib/identity';
-import { ShivAIUser } from '@/lib/sdk';
+import { ShivAIProfile } from '@/lib/sdk';
 
 // Futuristic Components
 import MailSidebar from '@/components/layout/MailSidebar';
@@ -14,7 +14,7 @@ import IntelligencePanel from '@/components/mail/IntelligencePanel';
 import { GlassCard } from '@/components/ui/GlassUI';
 
 export default function Home() {
-  const [user, setUser] = useState<ShivAIUser | null>(null);
+  const [profile, setProfile] = useState<ShivAIProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [selectedMailId, setSelectedMailId] = useState<string | null>(null);
@@ -28,8 +28,11 @@ export default function Home() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const u = await identity.getCurrentUser();
-      setUser(u);
+      const user = await identity.getCurrentUser();
+      if (user) {
+        const p = await identity.getProfile(user.id);
+        setProfile(p);
+      }
       setLoading(false);
     };
     checkAuth();
@@ -61,7 +64,7 @@ export default function Home() {
     </div>
   );
 
-  if (!user) return (
+  if (!profile) return (
     <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 overflow-hidden relative">
       <div className="absolute top-0 -left-20 w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 -right-20 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full" />
