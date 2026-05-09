@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Shield, Smartphone, Globe, LayoutGrid, CheckCircle, Menu, X, Brain } from 'lucide-react';
+import { Mail, Shield, Smartphone, Globe, LayoutGrid, CheckCircle, Menu, X, Brain, Lock } from 'lucide-react';
 import { identity } from '@/lib/identity';
 import { ShivAIUser } from '@/lib/sdk';
 import MailSidebar from '@/components/layout/MailSidebar';
@@ -17,6 +17,12 @@ export default function Home() {
   const [selectedMailId, setSelectedMailId] = useState<string | null>(null);
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthErrorLoading] = useState(false);
+
   useEffect(() => {
     const checkAuth = async () => {
       const u = await identity.getCurrentUser();
@@ -25,6 +31,21 @@ export default function Home() {
     };
     checkAuth();
   }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthErrorLoading(true);
+    setAuthError('');
+    try {
+        const { data, error } = await identity.login(loginEmail, loginPassword);
+        if (error) throw error;
+        window.location.reload();
+    } catch (err: any) {
+        setAuthError(err.message || 'Access Denied');
+    } finally {
+        setAuthErrorLoading(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-[#050505]">
@@ -43,21 +64,63 @@ export default function Home() {
       <div className="absolute top-0 -left-20 w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 -right-20 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full" />
       
-      <GlassCard className="max-w-md w-full p-12 text-center relative z-10 border-white/5">
-         <div className="w-20 h-20 bg-blue-600/10 border border-blue-500/20 rounded-3xl mx-auto flex items-center justify-center mb-8">
-            <Shield className="text-blue-500" size={40} />
+      <GlassCard className="max-w-md w-full p-10 text-center relative z-10 border-white/5 bg-[#0a0a0a]/80 backdrop-blur-3xl rounded-[2.5rem]">
+         <div className="w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl mx-auto flex items-center justify-center mb-8">
+            <Mail className="text-blue-500" size={32} />
          </div>
-         <h1 className="text-4xl font-black text-white mb-4 tracking-tighter italic">AUTHENTICATION REQUIRED</h1>
-         <p className="text-gray-500 text-sm mb-12 leading-relaxed">Please verify your ShivAI Identity to access your encrypted communications hub.</p>
+         <h1 className="text-3xl font-black text-white mb-2 tracking-tighter italic uppercase">ShivAI Mail</h1>
+         <p className="text-gray-500 text-sm mb-10">Access your encrypted communications hub.</p>
          
-         <div className="space-y-4">
-            <NeonButton 
-              onClick={() => window.location.href = 'https://shivai-identity-prod.vercel.app'} 
-              className="w-full h-16 text-lg"
+         <form onSubmit={handleLogin} className="space-y-4 text-left">
+            <div>
+               <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-2 ml-1">ShivAI Email</label>
+               <div className="relative">
+                  <Mail size={16} className="absolute left-4 top-4 text-gray-600" />
+                  <input 
+                    type="email" 
+                    value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)}
+                    placeholder="name@shiv.ai"
+                    className="w-full bg-white/5 border border-white/10 p-4 pl-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all"
+                    required
+                  />
+               </div>
+            </div>
+            <div>
+               <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-2 ml-1">Master Password</label>
+               <div className="relative">
+                  <Lock size={16} className="absolute left-4 top-4 text-gray-600" />
+                  <input 
+                    type="password" 
+                    value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-white/5 border border-white/10 p-4 pl-12 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all"
+                    required
+                  />
+               </div>
+            </div>
+
+            {authError && <p className="text-red-400 text-xs font-bold text-center bg-red-400/10 p-3 rounded-xl border border-red-400/20">{authError}</p>}
+
+            <button 
+              type="submit"
+              disabled={authLoading}
+              className="w-full h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-3"
             >
-               Continue with Identity
-            </NeonButton>
-            <p className="text-[10px] font-black uppercase text-gray-700 tracking-widest">Ecosystem Protected by ShivAI Root</p>
+               {authLoading ? 'Verifying...' : 'Continue to Inbox'}
+               {!authLoading && <CheckCircle size={20} />}
+            </button>
+         </form>
+
+         <div className="mt-8 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
+            <p className="text-xs text-gray-600 font-medium">Don't have an address?</p>
+            <button 
+              onClick={() => window.location.href = 'https://shivai-identity-prod.vercel.app'} 
+              className="text-xs font-black uppercase text-blue-400 hover:text-blue-300 tracking-widest transition-colors"
+            >
+               Create ShivAI Identity
+            </button>
          </div>
       </GlassCard>
     </div>
