@@ -15,6 +15,8 @@ export interface ShivAIProfile {
   metadata: Record<string, any>;
 }
 
+export interface ShivAIUser extends User, ShivAIProfile {}
+
 export class ShivAISDK {
   private static instance: ShivAISDK;
   public supabase: SupabaseClient;
