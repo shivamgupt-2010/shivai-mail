@@ -3,30 +3,81 @@
 @tailwind utilities;
 
 :root {
-  --background: #050505;
-  --foreground: #ffffff;
+  --neon-blue: #3b82f6;
+  --neon-emerald: #10b981;
+  --neon-purple: #8b5cf6;
+  --neon-red: #ef4444;
+  --matte-black: #050505;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--matte-black);
+  color: white;
   overflow: hidden;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+@layer utilities {
+  .glass-panel {
+    @apply bg-[#0a0a0a]/60 backdrop-blur-3xl border border-white/5;
+  }
+  
+  .neon-glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+  
+  .animate-materialize {
+    animation: materialize 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+@keyframes materialize {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+.neural-pulse {
+  position: relative;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.1);
+.neural-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.neural-pulse:hover::after {
+  opacity: 0.2;
+}
+
+/* AI Processing Stream */
+.ai-stream {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(59, 130, 246, 0.1) 50%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: stream 3s linear infinite;
+}
+
+@keyframes stream {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
